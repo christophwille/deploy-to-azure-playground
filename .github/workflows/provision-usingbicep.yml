@@ -5,8 +5,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      stage: prod
-      resourceGroup: rg-ghaction-cwi-tests
+      STAGE: prod
+      RESOURCEGROUP: rg-ghaction-cwi-tests
     steps:
     - uses: actions/checkout@v2
     - uses: azure/login@v1
@@ -25,4 +25,4 @@ jobs:
       with:
         azcliversion: latest
         inlineScript: |
-          az deployment group create -f ./provisioning/main.bicep -g $env:resourceGroup --parameters environment=$env:stage
+          az deployment group create -f ./provisioning/main.bicep -g ${{ env.RESOURCEGROUP }} --parameters environment=${{ env.STAGE }}
