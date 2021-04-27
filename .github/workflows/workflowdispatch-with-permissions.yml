@@ -24,4 +24,4 @@ jobs:
     - name: echo input
       run: |
         echo "Stage: ${{ github.event.inputs.stage }}" \
-        echo "Resource group: ${{ github.event.inputs.resourceGroup }}"
+        echo "Resource group: ${{ github.event.inputs.resourceGroup }}" \
