@@ -1,0 +1,27 @@
+# https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/
+#   + https://github.com/74th/workflow-permission-action
+
+on: 
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: 'Stage'     
+        required: true
+        default: 'prod'
+      resourceGroup:
+        description: 'Resource group'     
+        required: true
+        default: 'rg-cwi-testing'
+        
+jobs:
+  printInputs:
+    runs-on: ubuntu-latest
+    steps:
+    - name: check user permission
+      uses: 74th/workflow-permission-action@1.0.0
+      with:
+        users: christophwille
+    - name: echo input
+      run: |
+        echo "Stage: ${{ github.event.inputs.stage }}" \
+        echo "Resource group: ${{ github.event.inputs.resourceGroup }}"
