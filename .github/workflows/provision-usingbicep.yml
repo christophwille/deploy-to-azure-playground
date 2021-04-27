@@ -1,0 +1,28 @@
+on: 
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      stage: prod
+      resourceGroup: rg-ghaction-cwi-tests
+    steps:
+    - uses: actions/checkout@v2
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - uses: Azure/get-keyvault-secrets@v1
+      id: keyvaultaction
+      with:
+        keyvault: "ghaction-deploy-credscwi"
+        secrets: "AZURE-CREDS"
+    - uses: azure/login@v1
+      with:
+        creds: ${{ steps.keyvaultaction.outputs.AZURE-CREDS }}
+    - name: Azure CLI script
+      uses: azure/CLI@v1
+      with:
+        azcliversion: latest
+        inlineScript: |
+          az deployment group create -f ./provisioning/main.bicep -g $env:resourceGroup --parameters environment=$env:stage
