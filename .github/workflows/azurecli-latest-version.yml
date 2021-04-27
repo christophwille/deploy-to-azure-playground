@@ -1,0 +1,14 @@
+# https://github.com/marketplace/actions/azure-cli-action
+on: 
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Azure CLI script
+      uses: azure/CLI@v1
+      with:
+        azcliversion: latest
+        inlineScript: |
+          az --version
