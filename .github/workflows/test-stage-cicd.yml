@@ -1,0 +1,65 @@
+# It would be nice to have templates https://github.com/github/roadmap/issues/98
+
+name: CI / CD for test stage
+
+on: 
+  workflow_dispatch: {}
+  push:
+    branches:
+    - "test-stage"
+    paths-ignore:
+    - "provisioning/**"
+    - ".github/**"
+
+jobs:
+  build_deploy:
+    runs-on: ubuntu-latest
+    environment: 
+      name: test
+    env:
+      AZURE_FUNCTIONAPP_NAME: cwighfunctest
+      AZURE_WEBAPP_NAME: cwighappsvctest
+      AZURE_FUNCTIONAPP_PACKAGE_PATH: ${{ github.workspace }}/.funcoutput
+      AZURE_WEBAPP_PACKAGE_PATH: ${{ github.workspace }}/.webappoutput
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core 3.1
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.x
+    - name: Setup .NET 5
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+
+    - name: Create Azure Function Artifact
+      run: dotnet publish ./src/DemoFunctionApp --configuration Release --output ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - uses: Azure/get-keyvault-secrets@v1
+      id: keyvaultaction
+      with:
+        keyvault: "ghaction-deploy-credscwi"
+        secrets: "AZURE-CREDS"
+    - uses: azure/login@v1
+      with:
+        creds: ${{ steps.keyvaultaction.outputs.AZURE-CREDS }}
+
+    - name: Deploy Function to Azure
+      uses: Azure/functions-action@v1
+      id: deploy-func-to-azure
+      with:
+        app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+        package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+
+    - name: Create Web App Artifact
+      run: dotnet publish ./src/DemoWebApp --configuration Release --output ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+      
+    - name: Deploy Web App to App Service
+      uses: azure/webapps-deploy@v2
+      with: 
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
