@@ -4,7 +4,7 @@ param appName string
 param location string = resourceGroup().location
 
 // storage accounts must be between 3 and 24 characters in length and use numbers and lower-case letters only
-var storageAccountName = '${substring(appName,0,10)}${uniqueString(resourceGroup().id)}' 
+var storageAccountName = '${appName}${uniqueString(resourceGroup().id)}' 
 var hostingPlanName = '${appName}${uniqueString(resourceGroup().id)}'
 var appInsightsName = '${appName}${uniqueString(resourceGroup().id)}'
 var functionAppName = '${appName}'
