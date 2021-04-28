@@ -1,4 +1,6 @@
 # https://github.com/marketplace/actions/azure-cli-action
+name: Display Azure CLI version
+
 on: 
   workflow_dispatch: {}
 

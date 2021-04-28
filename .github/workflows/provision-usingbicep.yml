@@ -1,3 +1,5 @@
+name: Provision using bicep in Azure CLI
+
 on: 
   workflow_dispatch:
     inputs:

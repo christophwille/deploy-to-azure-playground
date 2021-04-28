@@ -1,5 +1,6 @@
 # https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/
 #   + https://github.com/74th/workflow-permission-action
+name: Additional user permission check in workflow_dispatch
 
 on: 
   workflow_dispatch:
