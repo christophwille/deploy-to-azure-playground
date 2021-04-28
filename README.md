@@ -17,3 +17,4 @@ See folder `.github\workflows`
 * simple-build.yml: mixed Functions and Web app build for .NET Core 3.1 and .NET 5.
 * simple-cicd.yml: publish artifacts and immediately deploy to known stage (Function & Web App).
 * test-stage-cicd.yml: See [Deploying to Stages](deploying-to-stages.md)
+* release-based-cd.yml: See [Deploy on release](onrelease.md)
