@@ -1,11 +1,17 @@
+name: Provision using bicep in Azure CLI
+
 on: 
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: 'Stage'     
+        required: true
+        default: 'prod'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      STAGE: prod
       RESOURCEGROUP: rg-ghaction-cwi-tests
     steps:
     - uses: actions/checkout@v2
@@ -25,4 +31,4 @@ jobs:
       with:
         azcliversion: latest
         inlineScript: |
-          az deployment group create -f ./provisioning/main.bicep -g ${{ env.RESOURCEGROUP }} --parameters environment=${{ env.STAGE }}
+          az deployment group create -f ./provisioning/main.bicep -g ${{ env.RESOURCEGROUP }} --parameters environment=${{ github.event.inputs.stage }}
