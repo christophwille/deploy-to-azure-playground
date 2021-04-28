@@ -5,8 +5,8 @@
 
 name: Simple CI / CD
 
-on:
-  push:
+on: 
+  workflow_dispatch: {}
 
 jobs:
   build:
