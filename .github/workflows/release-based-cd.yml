@@ -1,0 +1,132 @@
+name: Release-based CD to all stages
+
+on:
+  release:
+    types: [published]
+
+env:
+  KEYVAULT_NAME: "ghaction-deploy-credscwi"
+  FUNCTIONAPP_ARTIFACT_NAME: funcapp-package
+  WEBAPP_ARTIFACT_NAME: webapp-package
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: ${{ github.workspace }}/.funcoutput
+  AZURE_WEBAPP_PACKAGE_PATH: ${{ github.workspace }}/.webappoutput
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core 3.1
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.x
+    - name: Setup .NET 5
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+
+    - name: Create Azure Function Artifact
+      run: dotnet publish ./src/DemoFunctionApp --configuration Release --output ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+    - name: Publish Azure Function Artifact
+      uses: actions/upload-artifact@v1
+      with:
+          name: ${{ env.FUNCTIONAPP_ARTIFACT_NAME }}
+          path: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+
+    - name: Create Web App Artifact
+      run: dotnet publish ./src/DemoWebApp --configuration Release --output ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+    - name: Publish Web App Artifact
+      uses: actions/upload-artifact@v1
+      with:
+          name: ${{ env.WEBAPP_ARTIFACT_NAME }}
+          path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+
+  deploy_test:
+    name: Deploy to Test stage
+    needs: [build]
+    runs-on: ubuntu-latest
+    env:
+      AZURE_FUNCTIONAPP_NAME: cwighfunctest
+      AZURE_WEBAPP_NAME: cwighappsvctest
+    environment: 
+      name: "alt-test"
+    steps:
+    - name: Download Functions Artifact
+      uses: actions/download-artifact@v1
+      with:
+        name: ${{ env.FUNCTIONAPP_ARTIFACT_NAME }}
+        path: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}    
+    - name: Download Web App Artifact
+      uses: actions/download-artifact@v1
+      with:
+        name: ${{ env.WEBAPP_ARTIFACT_NAME }}
+        path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}    
+
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - uses: Azure/get-keyvault-secrets@v1
+      id: keyvaultaction
+      with:
+        keyvault: ${{ env.KEYVAULT_NAME }}
+        secrets: "AZURE-CREDS"
+    - uses: azure/login@v1
+      with:
+        creds: ${{ steps.keyvaultaction.outputs.AZURE-CREDS }}
+
+    - name: Deploy Function to Azure
+      uses: Azure/functions-action@v1
+      id: deploy-func-to-azure
+      with:
+        app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+        package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+    - name: Deploy Web App to App Service
+      uses: azure/webapps-deploy@v2
+      with: 
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+
+  deploy_prod:
+    name: Deploy to Prod stage
+    needs: [deploy_test]
+    runs-on: ubuntu-latest
+    env:
+      AZURE_FUNCTIONAPP_NAME: cwighfuncprod
+      AZURE_WEBAPP_NAME: cwighappsvcprod
+    environment: 
+      name: "alt-prod"
+    steps:
+    - name: Download Functions Artifact
+      uses: actions/download-artifact@v1
+      with:
+        name: ${{ env.FUNCTIONAPP_ARTIFACT_NAME }}
+        path: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}    
+    - name: Download Web App Artifact
+      uses: actions/download-artifact@v1
+      with:
+        name: ${{ env.WEBAPP_ARTIFACT_NAME }}
+        path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}    
+
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - uses: Azure/get-keyvault-secrets@v1
+      id: keyvaultaction
+      with:
+        keyvault: ${{ env.KEYVAULT_NAME }}
+        secrets: "AZURE-CREDS"
+    - uses: azure/login@v1
+      with:
+        creds: ${{ steps.keyvaultaction.outputs.AZURE-CREDS }}
+
+    - name: Deploy Function to Azure
+      uses: Azure/functions-action@v1
+      id: deploy-func-to-azure
+      with:
+        app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+        package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+    - name: Deploy Web App to App Service
+      uses: azure/webapps-deploy@v2
+      with: 
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
